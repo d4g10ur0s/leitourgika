@@ -52,7 +52,7 @@ void main(){
   }
 
   //Produce Processes
-  for(int i = 0; i<=4; i++){
+  for(int i = 0; i<=3; i++){
     pid_t tempid = fork();
 
     //Child process
@@ -87,10 +87,11 @@ void main(){
     *buffer[1] = *buffer[0];
     //Unblock P4
     sem_post(msema[2]);
-    //Block P2 (self)
     usleep(5);
+    //Block P2 (self)
     sem_wait(msema[2]);
     sem_post(msema[0]);
+    usleep(5);
   }
   //Process 3
   //Child Process
@@ -101,10 +102,11 @@ void main(){
     *buffer[2] = *buffer[0];
     //Unblock P5
     sem_post(msema[3]);
-    //Block P3 (self)
     usleep(5);
+    //Block P3 (self)
     sem_wait(msema[3]);
     sem_post(msema[1]);
+    usleep(5);
   }
   //Process 4
   //Child Process
@@ -112,19 +114,21 @@ void main(){
     //Block until P2 is done
     sem_wait(msema[2]);
     //P4 is Unblocked
-    *buffer[1] += rand()%10;
+    *buffer[1] = *buffer[1] + random()%10;
     //Unblock P2
     usleep(5);
     sem_post(msema[2]);
+    usleep(5);
   }
   else if(getpid() == *pid[3]){
     //Block until P3 is done
     sem_wait(msema[3]);
     //P5 is Unblocked
-    *buffer[1] += rand()%10;
+    *buffer[2] = *buffer[2] + random()%10;
     //Unblock P3
     usleep(5);
     sem_post(msema[3]);
+    usleep(5);
   }
   //Process 1
   //Parent Process
@@ -133,12 +137,14 @@ void main(){
     signal(SIGCONT,SIG_DFL);
     signal(SIGSTOP,SIG_DFL);
     //Wake up children
-    for(int i = 0; i<=3; i++){
-      printf("Child %i wakes up\n", *pid[i]);
-      kill(*pid[i],18);
+    if(j == 0){
+      for(int i = 0; i<=3; i++){
+        printf("Child %i wakes up\n", *pid[i]);
+        kill(*pid[i],18);
+      }
     }
 
-    *buffer[0] = rand()%10;
+    *buffer[0] = random()%10;
     //Unblock P2
     sem_post(msema[0]);
     //Unblock P3
@@ -149,11 +155,9 @@ void main(){
     sem_wait(msema[0]);
     sem_wait(msema[1]);
 
-    if(*buffer[1]>*buffer[2]){printf("Buffer 1 : %i > Buffer 2 : %i\nP3 : %i > P4 : %i\n",*buffer[1],*buffer[2],*pid[3],*pid[4]);}
-    else{printf("Buffer 1 : %i > Buffer 2 : %i\nP3 : %i > P4 : %i\n",*buffer[2],*buffer[1],*pid[4],*pid[3]);}
-    //Wait for children
-    //int status;
-    //for(int i = 0; i<=3; i++){ waitpid(-1,&status,0); }
+    if(*buffer[1]>*buffer[2]){printf("Buffer 1 : %i > Buffer 2 : %i\nP3 : %i > P4 : %i\n",*buffer[1],*buffer[2],*pid[2],*pid[3]);}
+    else{printf("Buffer 2 : %i > Buffer 1 : %i\nP3 : %i > P4 : %i\n",*buffer[2],*buffer[1],*pid[3],*pid[2]);}
+    usleep(5);
   }
 }
 
